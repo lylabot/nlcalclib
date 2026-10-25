@@ -17,7 +17,7 @@ export const nativeNumberWords = ['π', 'pi', 'tau', 'phi'] as const
 export const formattingKeywords = ['number', 'percent', '%', 'fraction', 'dec', 'decimal', 'multiplier', 'x']
 export const escapedCommonCurrencySymbols = commonCurrencySymbols.map(sym => sym === '$' ? `\\${sym}` : sym)
 
-export const arbitraryUnit = new RegExp(`(?:${unitsShortWithSpaces.source.replaceAll(' ', '\\s+')}\\b|(?-i:${unitsLongWithSpaces.source.replaceAll(' ', '\\s+')})\\b|(?!rounded|to|dp|digits|of|base|and|between|as|plus|minus|times\b|multiplied|over|divided|power(?:to|in|as)\\s+(?:${formattingKeywords.join('|')}))(?:%|[${letter.source}/${escapedCommonCurrencySymbols.join('')}]+?)(?![${letter.source}/]))`, 'u') /* todo exclude keywords */
+export const arbitraryUnit = new RegExp(`(?:${unitsShortWithSpaces.source.replaceAll(' ', '\\s+')}\\b|(?-i:${unitsLongWithSpaces.source.replaceAll(' ', '\\s+')})\\b|(?!rounded|to|dp|digits|of|base|and|between|as|plus|minus|times\b|multiplied|over|divided|power(?:to|in|as)\\s+(?:${formattingKeywords.join('|')}))(?:%|[${letter.source}/${escapedCommonCurrencySymbols.join('')}]+?[0-9]?)(?![${letter.source}/]))`, 'u') /* todo exclude keywords */
 export const largeNumberSuffixes = {k: 1e3, M: 1e6, G: 1e9, T: 1e12}
 export const largeNumberSuffixRegex = new RegExp(`[${Object.keys(largeNumberSuffixes).join('')}]`)
 export const digits = /[+-]?\d+(?:[,._]+\d+)*/

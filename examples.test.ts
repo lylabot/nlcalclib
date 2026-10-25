@@ -88,6 +88,7 @@ const results: { [key: string]: string | ((result: string) => boolean | string) 
   '10 GB + 500 MB in GB': '10.5 GB',
   '1 hour 15 minutes + 45 minutes': '2h',
   '2 square meters + 500 square centimeters': '2.05 m²',
+  '2 m2 + 500 cm2': '2.05 m²',
   '80 mph in km/h': '128.74752 km/h',
 
   'total income: $4,500 rent + $600 food': '5,100\u00A0US$',
@@ -280,12 +281,12 @@ const results: { [key: string]: string | ((result: string) => boolean | string) 
   },
   '6pm Sydney in Chicago': result => result.endsWith(' at 02 GMT-5'),
   '2am PST to GMT': result => result.endsWith(' at 09 GMT'),
-  '3pm GMT+8 to Paris': result => result.endsWith(' at 09 GMT+2'),
-  'time in Tokyo when it is 9am in London': result => result.endsWith(' at 17 GMT+9'),
+  '3pm GMT+8 to Paris': result => result.endsWith(' at 09 GMT+2') || result.endsWith(' at 08 GMT+1'),
+  'time in Tokyo when it is 9am in London': result => result.endsWith(' at 17 GMT+9') || result.endsWith(' at 18 GMT+9'),
   'Monday 9am Delhi in new york': result => result.endsWith(' at 23:30 GMT-4'),
   // '7:30am LAX to Japan': '',
   'time in Paris': () => {
-    const date = Temporal.Now.zonedDateTimeISO('+02:00')
+    const date = Temporal.Now.zonedDateTimeISO('Europe/Paris')
     return date.toLocaleString(LOCALE, {
       month: 'long',
       day: 'numeric',

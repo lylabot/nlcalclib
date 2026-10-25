@@ -51,12 +51,12 @@ export function parseDates(expression: string, tokens: Token[]) {
       date = new Date()
       let isTimed = false
       if (keyword.toLowerCase() === 'today') {
-        date.setHours(0, 0, 0, 0)
+        date.setUTCHours(0, 0, 0, 0)
       } else if (keyword.toLowerCase() === 'tomorrow') {
-        date.setHours(0, 0, 0, 0)
+        date.setUTCHours(0, 0, 0, 0)
         date.setDate(date.getDate() + 1)
       } else if (keyword.toLowerCase() === 'yesterday') {
-        date.setHours(0, 0, 0, 0)
+        date.setUTCHours(0, 0, 0, 0)
         date.setUTCDate(date.getUTCDate() - 1)
       } else {
         isTimed = true
