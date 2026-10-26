@@ -11,6 +11,7 @@ It supports:
 - currency with customizable exchange rates
 - date and time calculations with timezone support
 
+Play around with it on the [demo page](https://lylabot.github.io/calculate/)  
 See the [comprehensive list of expressions](#examples)
 
 ## Install
