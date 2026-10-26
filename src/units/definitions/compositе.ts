@@ -62,7 +62,6 @@ const siP = () =>
     c(Decimal.pow(10, siSubmultiplesExponents[index]))
   ]))
 
-// todo https://de.wikipedia.org/wiki/Internationales_Einheitensystem
 // register for normalized components FIRST, e.g. m/s before km/h or mph
 // SPEED / VELOCITY
 registerCompositeUnit('m/s', /m\/s|met(?:er|re)s?(?:\s+per\s+|\s*\/\s*)sec(ond)?/, {num: ['meter'], den: ['second']})

@@ -135,10 +135,10 @@ const unitsShort = {
   },
   area: {
     ...siS('meter', 'm2?', 'square ', '(sq(uare\\s+)?\\s*(?!\\w{1,2}m2))?'),
-    'square mile': /sq(uare\s+)?\s*mi/,
-    'square yard': /sq(uare\s+)?\s*yd/,
-    'square foot': /sq(uare\s+)?\s*ft/,
-    'square inch': /sq(uare\s+)?\s*in/,
+    'square mile': /sq(uare\s+)?\s*mi|mi2/,
+    'square yard': /sq(uare\s+)?\s*yd|yd2/,
+    'square foot': /sq(uare\s+)?\s*ft|ft2/,
+    'square inch': /sq(uare\s+)?\s*in|in2/,
     'hectare': /ha/,
     'acre': /ac/,
   },
@@ -203,11 +203,13 @@ const unitsShort = {
     ...Object.fromEntries(['kibi', 'mebi', 'gibi', 'tebi', 'pebi'].map((prefix) =>
       [prefix + 'bit', new RegExp(`[${prefix[0].toUpperCase()}${prefix[0].toLowerCase()}]ib`)]
     )),
-    ...Object.fromEntries(['kibi', 'mebi', 'gibi', 'tebi', 'pebi'].map((prefix, i) =>
+    ...Object.fromEntries(['kibi', 'mebi', 'gibi', 'tebi', 'pebi'].map((prefix) =>
       [prefix + 'byte', new RegExp(`[${prefix[0].toUpperCase()}${prefix[0].toLowerCase()}]iB`)]
     )),
   },
 } satisfies { [T in keyof typeof unitsConversions]: { [U in Exclude<keyof typeof unitsConversions[T], NoShortFormUnits>]: RegExp } }
+
+// console.log(unitsShort.area)
 
 for (const unitClass in unitsShort) {
   // @ts-ignore

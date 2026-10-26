@@ -1,5 +1,6 @@
 import {commonCurrencySymbols} from '../units/definitions/base'
 import {durationLong, durationShort, tz, unitsLongWithSpaces, unitsShortWithSpaces} from './generated'
+import {unitsLong, unitsShort} from '../units/definitions/parse'
 
 /*
 * Matches digits with decimal points ., and thousand-separators ,._
@@ -25,14 +26,18 @@ export const pureNumber = new RegExp(`(?<ds>${numberPlaceholderRegex.source}|${d
 export const durationUnit = new RegExp(`(?:(?-i:${durationShort.source})${durationLong.source})`, 'iu')
 export const durationPart = new RegExp(`${pureNumber.source}\\s*(?<u>${durationUnit.source})`, 'iu')
 export const duration = new RegExp(`(?<D>(?:${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1D>')}\\s*(?<uD>${durationUnit.source}))(?:\\s*${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1Dt>')}\\s*(?<uDt>${durationUnit.source}))*)`, 'iu')
-export const number = new RegExp(`(?<up>${escapedCommonCurrencySymbols.join('|')})?(?:${duration.source}|${pureNumber.source}(?:\\s*(?<u>${arbitraryUnit.source}))?)`, 'iu')
+export const feetUnits = new RegExp(`(?:${unitsShort.length.foot.source.replaceAll('\\b', '')}|${unitsLong.length.foot.source.replaceAll('\\b', '')})`, 'iu')
+export const inchesUnits = new RegExp(`(?:${unitsShort.length.inch.source.replaceAll('\\b', '')}|${unitsLong.length.inch.source.replaceAll('\\b', '')})`, 'iu')
+export const feetInches = new RegExp(`(?<ftin>${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1ft>')}${feetUnits.source}(?![23](?!${inchesUnits.source}))\\s*${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1in>')}${inchesUnits.source}?)`, 'iu')
+export const number = new RegExp(`(?<up>${escapedCommonCurrencySymbols.join('|')})?(?:${duration.source}|${feetInches.source}|${pureNumber.source}(?:\\s*(?<u>${arbitraryUnit.source}))?)`, 'iu')
+// export const number = new RegExp(`(?:${pureNumber.source})`, 'iu')
 export const listSeparator = /[,\s]*(?:and\s+)?/
 export const numberList = new RegExp(`${number.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$11l>`)}(${listSeparator.source}${number.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$12l>`)}){1,}`, 'iu')
 export const numberNotPlaceholder = new RegExp(number.source.replace(numberPlaceholderRegex.source + '|', ''), 'iu')
 export const percentageUnit = /%|percent/
 export const percentage = new RegExp(`${digits.source}\s+(${percentageUnit.source})`)
 const numberBase = (i: number, isTrailing = false) => number.source.replace(/(\?\(\?<u)/, isTrailing ? '(?<u' : '$1').replace(/\(\?<([a-zA-Z]+)>/g, `(?<$1${i}>`)
-export const d = (i: number, isTrailing = false) => `\\s*(?<n${i}>${duration.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$1${i}>`)})\\s*`
+export const d = (i: number) => `\\s*(?<n${i}>${duration.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$1${i}>`)})\\s*`
 export const n = (i: number, isTrailing = false) => `\\s*(?<n${i}>${numberBase(i, isTrailing)})\\s*`
 export const nw = (i: number, isTrailing = false) => `\\s*(?:(?<n${i}>${numberBase(i, isTrailing)})|(?<w${i}>what))\\s*`
 export const l = (i: number) => `\\s*(?<l${i}>${numberList.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$1${i}>`)})\\s*`
@@ -93,7 +98,7 @@ const monthRegex = new RegExp(`(?:${months.map(month => {
   if (month.length > 3) return `${month.substring(0, 3)}(?:${month.substring(3)})?`
   else return month
 }).join('|')})`, 'i')
-const numbersOnlyDate = /(?:(?<yn1>\d{4})|(?<dn1>\d{1,2}))[.\/\\-](?<mon>\d{1,2})[.\/\\-](?:(?<yn2>\d{4})|(?<dn2>\d{1,2}))/
+const numbersOnlyDate = /(?<yn1>\d{4})[.\/\\-](?<mon1>\d{1,2})[.\/\\-](?<dn1>\d{1,2})|(?<dn2>\d{1,2})[.\/\\-](?<mon2>\d{1,2})[.\/\\-](?<yn2>\d{4})/
 const longDate = new RegExp(`(?:${weekdaysRegex.source},?\\s+)?(?:${dayRegex.source.replace('(?<d>', `(?<d1>`)}\\s+(?<m1>${monthRegex.source})|(?<m2>${monthRegex.source})\\s+${dayRegex.source.replace('(?<d>', `(?<d2>`)})(?:\\s*,?\\s+(?<y>\\d{4})\\b)?`, 'gi')
 const weekdayDate = new RegExp(`${weekdaysRegex.source}`, 'gi')
 const longTimeRegex = /(?<hr2>\d{1,2}):(?<min>\d{1,2})(?::(?<sc>\d{1,2})(?:\.(?<sfr>\d+))?)?(?:\s*(?<md2>[ap]\.?m\.?)|Z)?/

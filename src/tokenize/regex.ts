@@ -32,7 +32,7 @@ const operatorsRegex = {
   [Operator.Median]: scout(({l}) => `(median)( of)?${l(1)}`),
   [Operator.Count]: scout(({l}) => `(count)( of)?${l(1)}`),
   [Operator.Root]: scout(({n}) => `(((?<n11>square|cube) root)|root ${n(12)})( of)?${n(2, true)}`),
-  [Operator.Logarithm]: scout(({n}) => `(log(arithm)?${n(1)})( (of|base))?${n(2, true)}`),
+  [Operator.Logarithm]: scout(({n}) => `(log(arithm)?${n(1)})(\\s*(of|base)${n(2, true)})?`),
   [Operator.Min]: scout(({l}) => `(smaller|lesser)( of)?${l(1)}`),
   [Operator.Max]: scout(({l}) => `(larger|greater)( of)?${l(1)}`),
   [Operator.Mid]: scout(({n}) => `(midpoint( between)?${n(1)}(and|&|,| )${n(21, true)}|half( of)?${n(22, true)})`),
@@ -105,7 +105,7 @@ export const formattingRegex = {
 }
 
 export const equationRegex = {
-  [EquationShape.CrossMul]: new RegExp(`^${nw(1)}is\\s+to${nw(2)}as${nw(3)}is\\s+to${nw(4)}$`, 'u'),
+  [EquationShape.CrossMul]: new RegExp(`^(?:${nw(11)}is\\s+to${nw(21)}as${nw(31)}is\\s+to${nw(41)}|${nw(12)}to${nw(22)}is${nw(32)}to${nw(42)})$`, 'u'),
   [EquationShape.Standard]: new RegExp(`^([\\s\\S]+?)\\s+(?:is|equals|is\\s+equal\\s+to|=)\\s+([\\s\\S]+?)$`, 'u'),
 }
 

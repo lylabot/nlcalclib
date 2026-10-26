@@ -13,6 +13,7 @@ import {compositeRegexToUnitMap} from '../units/definitions/compositе'
 import {ISO4217Currency} from '../units/definitions/currency'
 
 export function parseNumber(number: string, unitPrefix?: string, unit?: string, suffix?: string): NumberToken {
+  // console.log(number, unitPrefix, unit, suffix)
   number = number.toLowerCase()
   const numberToken: Partial<NumberToken> = {type: 'number'}
   if (((number: string): number is typeof nativeNumberWords[number] => nativeNumberWords.includes(
@@ -29,7 +30,7 @@ export function parseNumber(number: string, unitPrefix?: string, unit?: string, 
       numberToken.value = Decimal(NaN)
     }
   } else {
-    if (suffix) number = number.replace(suffix, '')
+    if (suffix) number = number.replace(suffix.toLowerCase(), '')
     const lastSeparatorMatch = number.match(/([.,])(\d+)$/)
     if (lastSeparatorMatch) {
       const lastSeparator = lastSeparatorMatch[1]
@@ -45,7 +46,7 @@ export function parseNumber(number: string, unitPrefix?: string, unit?: string, 
       if (decimalSeparator === ',') {
         number = number.replaceAll(decimalSeparator, '.')
       }
-      number = number.replaceAll(new RegExp(`(?<!^\\d+)${RegExp.escape(decimalSeparator)}`, 'g'), '')
+      number = number.replaceAll(/(?<!^\d+)\./g, '')
     }
     numberToken.value = Decimal(number.replaceAll(',', ''))
   }
@@ -57,12 +58,12 @@ export function parseNumber(number: string, unitPrefix?: string, unit?: string, 
     numberToken.value = numberToken.value.div(100)
   } else if (unitPrefix || unit) {
     let normalizedUnit: string | NormalizedCompositeUnit = null!, conversion: Conversion = null!
-    if (unitPrefix) {
-      [normalizedUnit, conversion] = findUnit(unitPrefix)
-    }
-    if (!normalizedUnit && unit) {
-      [normalizedUnit, conversion] = findUnit(unit)
-    }
+    const fullUnitString = unitPrefix
+      ? (unit && unit.trim().startsWith('/')
+        ? unitPrefix + unit
+        : unitPrefix)
+      : unit as string
+    ;[normalizedUnit, conversion] = findUnit(fullUnitString)
     if (normalizedUnit && conversion) {
       numberToken.unit = normalizedUnit
       numberToken.value = conversion.from(numberToken.value)

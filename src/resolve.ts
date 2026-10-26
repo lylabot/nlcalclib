@@ -22,7 +22,8 @@ import {
 import {resolveUnitName} from './tokenize/number'
 import {unitsConversions} from './units/definitions/conversion'
 
-const denUnitPartRegex = /([^^]+)\^\(-(\d+)\)$/
+const numUnitPartRegex = /^([^^]+)(?:\^(\d+))?$/
+const denUnitPartRegex = /^([^^]+)\^\(-(\d+)\)$/
 
 export function resolve(token: Token): NumberToken | NormalizedToken | DateTimeToken | null {
   if (!token) return null
@@ -31,14 +32,17 @@ export function resolve(token: Token): NumberToken | NormalizedToken | DateTimeT
   // else if (token.type === 'interval') return token
   else if (token.type === 'operator') return resolveOperator(token)
   else if (token.type === 'equation') {
-    // todo handle error thrown by nerdamer
-    // console.log(token)
+    // console.log(`${stringifyToken(token.left)}=${stringifyToken(token.right)}`)
     const vector = nerdamer(`solve(${stringifyToken(token.left)}=${stringifyToken(token.right)},x)`)
     const vectorText = vector.text()
     const solves = vectorText.substring(1, vectorText.length - 1).split(',') as string[]
     const [solveNumberString, ...solveUnitParts] = solves[0].split('*')
     const [unit, conversion] = normalizeDimension({
-      num: solveUnitParts.filter(part => !denUnitPartRegex.test(part)).map(resolveUnitName),
+      num: solveUnitParts.map(part => {
+        const match = part.match(numUnitPartRegex)
+        if (!match) return null
+        return Array(Number(match[2] ?? 1)).fill(0).map(() => resolveUnitName(match[1]))
+      }).flat().filter(v => v !== null),
       den: solveUnitParts.map(part => {
         const match = part.match(denUnitPartRegex)
         if (!match) return null
@@ -196,6 +200,9 @@ function resolveOperator(token: OperatorToken): NumericToken | DateTimeToken {
   } else if (token.value === Operator.Clamp) {
     // todo units MUST equal exactly or be undefined
     value = Decimal.clamp(numbers[0], ...orderTwo([Decimal(numbers[1] ?? -Infinity), Decimal(numbers[2] ?? Infinity)]))
+  }
+  if (value.isNaN()) {
+    throw new Error('Resolving failed successfully')
   }
   return {
     type: 'number',

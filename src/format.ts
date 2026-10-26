@@ -3,7 +3,7 @@ import {formatUnit, fromToUnits} from './units/utils'
 import {
   DateTimeToken,
   Formatting,
-  FormattingToken,
+  FormattingToken, MultiUnitToken,
   NonIntFormat,
   NormalizedToken,
   NumericToken,
@@ -128,7 +128,7 @@ export function formatNumber(number: NumericToken | DateTimeToken, formatting?: 
     // @ts-ignore
     number.unit
   )) {
-    if ('originalUnit' in number && number.originalUnit) {
+    if ('originalUnit' in number && typeof number.originalUnit === 'string') {
       const exchangeRate = getExchangeRate()?.currentRate(number.unit as ISO4217Currency, number.originalUnit as ISO4217Currency) ?? Decimal(1)
       number.value = number.value.mul(exchangeRate)
       number.unit = number.originalUnit
@@ -158,6 +158,8 @@ export function formatNumber(number: NumericToken | DateTimeToken, formatting?: 
     duration.weeks = value.div(7).floor().toNumber()
     string = new Intl.DurationFormat(LOCALE, {style: 'narrow'}).format(duration)
     string ||= '0d'
+  } else if ('numbers' in number) {
+    string = (number as MultiUnitToken).numbers.map(number => formatNumber(number)).join(' ')
   } else {
     let unitString: string = null!
     if ('originalUnit' in number && number.originalUnit) {
@@ -167,13 +169,16 @@ export function formatNumber(number: NumericToken | DateTimeToken, formatting?: 
       const [_, conversionBase] = formatUnit(number.unit)
       number.value = conversionBase.from(number.value)
     } else if (number.unit) {
-      const [us, conversion] = formatUnit(number.unit)
+      const [us] = formatUnit(number.unit)
       unitString = us
-      number.value = conversion.to(number.value)
     }
     string = formatPureNumber(number.value)
     if (unitString) {
-      string += ' ' + unitString
+      if (/\p{L}/u.test(unitString)) {
+        string += ' ' + unitString
+      } else {
+        string += unitString
+      }
     }
   }
   return string
@@ -210,8 +215,8 @@ function formatPureNumber(number: Decimal, as: NonIntFormat = NonIntFormat.Decim
   } else {
     // as === NonIntFormat.Decimal
     return Intl.NumberFormat(LOCALE, {
-      notation: 'standard',
-      maximumFractionDigits: 9
+      maximumFractionDigits: 9,
+      notation: number.e >= 12 ? 'scientific' : 'standard',
     }).format(number.toNumber())
   }
 }

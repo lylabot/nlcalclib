@@ -7,7 +7,6 @@ import {
   FormattingToken,
   ListToken,
   MultiUnitToken,
-  NonIntFormat,
   NumberToken,
   OperationComplimentaryToken,
   Operator,
@@ -131,6 +130,7 @@ export function tokenize(expression: string, tokens: Token[], parseWhat = false)
       token.right = tokenize(match[2], tokens.slice(numberOfSubInLeft, tokens.length), true)[0] as Token
       if (!token.left || !token.right) continue
     }
+    // console.log(JSON.stringify(token, null, 2))
     return [token as EquationToken, null]
   }
 
@@ -185,7 +185,9 @@ export function tokenize(expression: string, tokens: Token[], parseWhat = false)
   if (!tree) {
     const numberMatch = numberNotPlaceholder.exec(expression)
     if (numberMatch && numberMatch.groups) {
-      tree = parseNumber(numberMatch.groups.ds, numberMatch.groups.up, numberMatch.groups.u, numberMatch.groups.s)
+      numberMatch.groups.n = numberMatch[0]
+      const [parsed] = parseMatch(numberMatch, tokens, () => 0)
+      tree = Array.isArray(parsed) ? parsed[0] : parsed
     }
   }
   // console.log(expression)
@@ -425,7 +427,7 @@ function parseMatch(match: RegExpExecArray, tokens: Token[], useAsTree: () => vo
   const numbers: (Token | Token[])[] = []
   for (const name in match.groups) {
     if (!match.groups[name]) continue
-    if (/^n\d+$/.test(name)) {
+    if (/^n\d*$/.test(name)) {
       const numberIndex = name.substring(1)
       const argumentIndex = Number(name[1]) - 1
       if (match.groups['n' + numberIndex] === match.groups['D' + numberIndex]) {
@@ -451,7 +453,19 @@ function parseMatch(match: RegExpExecArray, tokens: Token[], useAsTree: () => vo
             token.numbers.push(subToken)
           }
         }
-        numbers[argumentIndex] = token
+
+        numbers[isNaN(argumentIndex) ? 0 : argumentIndex] = token
+      } else if (match.groups['n' + numberIndex] === match.groups['ftin' + numberIndex]) {
+        const token: MultiUnitToken = {
+          type: 'number',
+          value: unitsConversions.length.foot.and(unitsConversions.length.inch.inverted).from(Decimal(match.groups['dsft' + numberIndex])).add(match.groups['dsin' + numberIndex]),
+          unit: 'inch',
+          numbers: [
+            {type: 'number', unit: 'foot', value: Decimal(match.groups['dsft' + numberIndex])},
+            {type: 'number', unit: 'inch', value: Decimal(match.groups['dsin' + numberIndex])},
+          ]
+        }
+        numbers[isNaN(argumentIndex) ? 0 : argumentIndex] = token
       } else {
         const digits = match.groups['ds' + numberIndex]
         const unitPrefix = match.groups['up' + numberIndex]
@@ -460,14 +474,14 @@ function parseMatch(match: RegExpExecArray, tokens: Token[], useAsTree: () => vo
         let placeholderMatch
         if ((placeholderMatch = numberPlaceholderRegex.exec(match.groups[name]))) {
           useAsTree()
-          numbers[argumentIndex] ??= tokens[Number(placeholderMatch.groups?.phi)]
+          numbers[isNaN(argumentIndex) ? 0 : argumentIndex] ??= tokens[Number(placeholderMatch.groups?.phi)]
         } else if (!digits) {
-          numbers[argumentIndex] ??= {
+          numbers[isNaN(argumentIndex) ? 0 : argumentIndex] ??= {
             type: 'complimentary',
             value: match.groups[name]
           } as OperationComplimentaryToken
         } else {
-          numbers[argumentIndex] ??= parseNumber(digits, unitPrefix, unit, suffix)
+          numbers[isNaN(argumentIndex) ? 0 : argumentIndex] ??= parseNumber(digits, unitPrefix, unit, suffix)
         }
       }
     } else if (/^l\d+$/.test(name)) {
@@ -492,7 +506,7 @@ function parseMatch(match: RegExpExecArray, tokens: Token[], useAsTree: () => vo
           list.push(parseNumber(subMatch.groups.ds, subMatch.groups.up, subMatch.groups.u, subMatch.groups.s))
         }
       } while (match)
-      numbers[argumentIndex] = list
+      numbers[isNaN(argumentIndex) ? 0 : argumentIndex] = list
     } else if (/^w\d+$/.test(name)) {
       const argumentIndex = Number(name[1]) - 1
       const numberIndex = name.substring(1)

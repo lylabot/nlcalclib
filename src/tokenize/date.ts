@@ -8,9 +8,12 @@ export function parseDates(expression: string, tokens: Token[]) {
     const groups = args.pop()
     const keyword = groups.dk
     const weekday = groups.wd
-    const dayString = groups.d1 ?? groups.d2 ?? groups.dn1 ?? groups.dn2
-    const monthNumberString = groups.mon
-    const monthString = groups.m1 ?? groups.m2
+    let dayString = groups.d1 ?? groups.d2 ?? groups.dn1 ?? groups.dn2
+    const monthNumberString = groups.mon1 ?? groups.mon2
+    let monthString = groups.m1 ?? groups.m2
+    if (Number(monthString) > 12 && Number(dayString) <= 12) {
+      [monthString, dayString] = [dayString, monthString]
+    }
     const yearString = groups.y ?? groups.yn1 ?? groups.yn2
     const hourString = groups.hr1 ?? groups.hr2
     const minuteString = groups.min
@@ -122,6 +125,7 @@ export function parseDates(expression: string, tokens: Token[]) {
       return numberPlaceholder + (tokens.push(token) - 1)
     }
   }).replaceAll(isTime, (match, ...args) => {
+    console.log(match)
     const groups = args.pop()
     const hourString = groups.hr1 ?? groups.hr2
     const minuteString = groups.min
