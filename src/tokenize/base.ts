@@ -14,7 +14,7 @@ export const letter = /\p{L}/u
 export const numberPlaceholder = '\u0376'
 export const u = (char: string) => '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0')
 export const numberPlaceholderRegex = new RegExp(`[+\\-]?${u(numberPlaceholder)}(?<phi>\\d+)`)
-export const nativeNumberWords = ['π', 'pi', 'tau', 'phi'] as const
+export const nativeNumberWords = ['π', 'pi', 'tau', 'phi', '∞', 'infinity'] as const
 export const formattingKeywords = ['number', 'percent', '%', 'fraction', 'dec', 'decimal', 'multiplier', 'x']
 export const escapedCommonCurrencySymbols = commonCurrencySymbols.map(sym => sym === '$' ? `\\${sym}` : sym)
 
@@ -31,6 +31,7 @@ export const inchesUnits = new RegExp(`(?:${unitsShort.length.inch.source.replac
 export const feetInches = new RegExp(`(?<ftin>${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1ft>')}${feetUnits.source}(?![23](?!${inchesUnits.source}))\\s*${pureNumber.source.replace(/\(\?<([a-zA-Z]+)>/g, '(?<$1in>')}${inchesUnits.source}?)`, 'iu')
 export const number = new RegExp(`(?<up>${escapedCommonCurrencySymbols.join('|')})?(?:${duration.source}|${feetInches.source}|${pureNumber.source}(?:\\s*(?<u>${arbitraryUnit.source}))?)`, 'iu')
 // export const number = new RegExp(`(?:${pureNumber.source})`, 'iu')
+// export const number = /\d+/
 export const listSeparator = /[,\s]*(?:and\s+)?/
 export const numberList = new RegExp(`${number.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$11l>`)}(${listSeparator.source}${number.source.replace(/\(\?<([a-zA-Z]+)>/g, `(?<$12l>`)}){1,}`, 'iu')
 export const numberNotPlaceholder = new RegExp(number.source.replace(numberPlaceholderRegex.source + '|', ''), 'iu')

@@ -26,6 +26,8 @@ export function parseNumber(number: string, unitPrefix?: string, unit?: string, 
       numberToken.value = Decimal.mul(Math.PI, 2)
     } else if (number === 'phi') {
       numberToken.value = Decimal(5).squareRoot().add(1).div(2)
+    } else if (number === '∞' || number === 'infinity') {
+      numberToken.value = Decimal(Infinity)
     } else {
       numberToken.value = Decimal(NaN)
     }

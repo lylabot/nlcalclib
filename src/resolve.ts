@@ -160,6 +160,7 @@ function resolveOperator(token: OperatorToken): NumericToken | DateTimeToken {
     value = Decimal(numbers.filter(n => n !== undefined).length)
     unit = undefined
   } else if (token.value === Operator.Root) {
+    token.arguments[0] ??= {type: 'complimentary', value: 'square'}
     // todo units MUST be numbers[0]th (or multiple) power or be undefined
     if (token.arguments[0].type === 'complimentary') {
       if (token.arguments[0].value === 'square') {

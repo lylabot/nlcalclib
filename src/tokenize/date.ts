@@ -125,7 +125,6 @@ export function parseDates(expression: string, tokens: Token[]) {
       return numberPlaceholder + (tokens.push(token) - 1)
     }
   }).replaceAll(isTime, (match, ...args) => {
-    console.log(match)
     const groups = args.pop()
     const hourString = groups.hr1 ?? groups.hr2
     const minuteString = groups.min

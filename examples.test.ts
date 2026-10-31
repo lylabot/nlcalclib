@@ -6,388 +6,546 @@ import {ISO4217Currency} from './src/units/definitions/currency'
 import Decimal from 'decimal.js'
 import {LOCALE} from './src/tokenize/base'
 
-const results: { [key: string]: string | ((result: string) => boolean | string) } = {
-  '': '',
-  '   ': '',
-  'just some words without numbers': '',
-  '10 +': '10',
-  '+++10---2': '8',
-  '100 + ( )': '100',
-  '# this is just a comment line': '',
-  '100 # inline comment text': '100',
+const results: { [key: string]: { [key: string]: string | ((result: string) => boolean | string) } } = {
+  general: {
+    '': '',
+    '   ': '',
+    'just some words without numbers': '',
+    '10 +': '10',
+    '+++10---2': '8',
+    '100 + ( )': '100',
+    '# this is just a comment line': '',
+    '100 # inline comment text': '100',
+  },
+  numberWords: {
+    'one hundred and twenty three plus forty five': '168',
+    'two point five times four': '10',
+    'two point seven three times four': '10.92',
+    'negative three hundred minus twelve': '-312',
+    'a million divided by two thousand': '500',
+    'three quarters of a hundred': '75',
+    'a third of 90': '30',
+    'double 45': '90',
+    'triple 3.5': '10.5',
+    'five hundred and six divided by forty two rounded': '12',
+    'ten percent of two hundred': '20',
+  },
+  nesting: {
+    '3 * (8 + 9)': '51',
+    '3 * 8 + 9 * 3': '51',
+    '3 * round(8 / 9)': '3',
+    'square root of (remainder of 21 divided by 5 plus 8)': '3',
+    'average of 10, count(4, 5, 6), and 3 to the power of 2': '7.333333333',
+    'half of 10% of 200': '10',
+    '10% off (200 + 10% on 100)': '279',
+    '20 to the power of (3 minus 1)': '400',
+    'midpoint between (100 + 50) and (400 / 2)': '175',
+  },
+  numericParsing: {
+    '1,0,0,0': '1',
+    '1.2.3.4 + 5': '6.234',
+    '999999999999999999999999999999 + 1': '1E30',
+    '1,00': '1',
+    '1,000': '1,000',
+    '1.00': '1',
+    '1.000': '1',
+    '1.00,00': '100',
+    '1,00.00': '100',
+    'π': '3.141592654',
+    'Pi': '3.141592654',
+    'Tau': '6.283185307',
+    'Phi': '1.618033989',
+    '∞': '∞',
+    'Infinity': '∞',
+  },
+  sum: {
+    '1 dollar + 50 cents + 2 quarters': '2\u00A0US$',
+    '10 000 000 + 5 000': '10,005,000',
+    '30 plus 20': '50',
+    '10 GB + 500 MB in GB': '10.5 GB',
+    '1 hour 15 minutes + 45 minutes': '2h',
+    'total income: $4,500 rent + $600 food': '5,100\u00A0US$',
+    '100 + 50 (bonus payment)': '150',
+    'what is 45 plus 55': '100',
+    'total of 3, 4, 7 and 9': '23',
+    'sum of 3, 4, 7 and 9': '23',
+  },
+  subtract: {
+    '4 -2': '2',
+    '3 − 42': '-39',
+    '3,000 minus 12': '2,988',
+    '1km - 400m': '600 m',
+    'subtract 5 from 8': '3',
+    '8 subtract 5': '3',
+  },
+  multiply: {
+    '3 multiplied by 4': '12',
+    '3 multiplied by 0': '0',
+    '3 times 4': '12',
+    '3 × 4': '12',
+    '3 * 4': '12',
+    '$25 per hour * 14 hours of work': '350\u00A0US$',
+    '2/3 of 600': '400',
+  },
+  divide: {
+    '10 divided by 0': '∞',
+    '0 divided by 0': 'Error',
+    '1,000 divided by 200': '5',
+    '12 divided by 3': '4',
+    '12 ÷ 3': '4',
+    '12 : 3': '4',
+    '12 / 3': '4',
+    '12 over 3': '4',
+  },
+  power: {
+    '3 to the power of 2': '9',
+    '3 ^ 2': '9',
+    '3 ** 2': '9',
+    '3 power 2': '9',
+    '3 to the 2': '9',
+    '3 to 2nd power': '9',
+    '3 to the 2nd power': '9',
+    '5**0': '1',
+    '0**5': '0',
+    '0**0': '1',
+    '1 ** ∞': 'Error',
+    '0.5 ** ∞': '0',
+    '1.5 ** ∞': '∞',
+  },
+  modulo: {
+    'remainder of 21 divided by 5': '1',
+    '21 % 5': '1',
+    '21 mod 5': '1',
+    '21 modulo 5': '1',
+    '21 % 0': 'Error',
+  },
+  factorial: {
+    '3!': '6',
+    '7 fact': '5,040',
+    '7 factorial': '5,040',
+    '0!': '1',
+    '3.5!': 'Error',
+    '-5!': '∞',
+  },
+  absolute: {
+    'abs 3': '3',
+    '|-3|': '3',
+    'abs -3': '3',
+    'abs of -3': '3',
+    'absolute -3': '3',
+    'absolute of -3': '3',
+    'absolute of 0': '0',
+    'absolute of -Infinity': '∞',
+  },
+  round: {
+    '5.5 rounded': '6',
+    '5.5rounded': '6',
+    '37 to nearest 10': '40',
+    '$490 rounded to nearest hundred': '500\u00A0US$',
+    '2,100 to nearest thousand': '2,000',
+  },
+  floor: {
+    '17 rounded down to nearest 3': '15',
+  },
+  ceil: {
+    '5.5 rounded up': '6',
+    '21 rounded up to nearest 5': '25',
+  },
+  average: {
+    'average of 36, 42, 19 and 81': '44.5',
+  },
+  median: {
+    'median of 10, 20 and 30': '20',
+    'median of 10, 20, 30, 40': '25',
+  },
+  count: {
+    'count of 1, 2, 3, 4, 5': '5',
+  },
+  root: {
+    'square root of -9': 'Error', // we're not supporting complex numbers
+    'square root of 81': '9',
+    'root of 81': '9',
+    'cube root of 27': '3',
+    'root 5 of 100': '2.511886432',
+    'root 3 of 4': '1.587401052',
+    'root 3 4': '1.587401052',
+    'root of 10': '3.16227766',
+    'root 10': '3.16227766',
+    'root 3 10': '2.15443469',
+  },
+  logarithm: {
+    'log 0': '-∞',
+    'log 20 base 4': '2.160964047',
+  },
+  min: {
+    'smaller of 5 and 10': '5',
+    'lesser of 5 and 10': '5',
+  },
+  max: {
+    'larger of 100 and 200': '200',
+    'greater of 100 and 200': '200',
+  },
+  mid: {
+    'half of 2': '1',
+    'half of 175': '87.5',
+    'midpoint between 150 and 300': '225',
+    'midpoint between 300 and 150': '225',
+  },
+  random: {
+    'random number between 1 and 10': (result) => Number(result) <= 10 && Number(result) >= 1,
+    'random number between 0 and 1': (result) => Number(result) <= 1 && Number(result) >= 0,
+  },
+  gcd: {
+    'gcd of 20 and 30': '10',
+  },
+  lcm: {
+    'lcm of 5 and 8': '40',
+  },
+  permutation: {
+    '10 permutation 3': '720',
+    '3 permutations of 10': '720',
+  },
+  combination: {
+    '25 combination 3': '2,300',
+    '3 combinations of 25': '2,300',
+  },
+  clamp: {
+    'clamp 26 between 5 and 25': '25',
+    'clamp 4 from 5 to 25': '5',
+  },
+  calendarWeek: {
+    'week of year': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+      return String(date.weekOfYear)
+    },
+    'week number on march 12, 2021': '10',
+  },
 
-  '1 dollar + 50 cents + 2 quarters': '2\u00A0US$',
-  '10m/s/s * 5s': '50 m/s',
-  '1,0,0,0': '1',
-  '1.2.3.4 + 5': '6.234',
-  '10 000 000 + 5 000': '10,005,000',
-  '999999999999999999999999999999 + 1': '1E30',
+  unitMerging: {
+    '10m/s/s * 5s': '50 m/s',
+    '60km divided by 30min': '2 km/min',
+    '0.001km': '0.001 km',
+    '3.6km/h in m/s': '1 m/s',
+    '2N / 4 kg': '0.5 m/s²',
+    '0.5 m/s * 4kg/s': '2 N',
+    '1/50ms in Hz': '20 Hz',
+    '60bpm as Hz': '1 Hz',
+  },
+  unitParsing: {
+    '6ft 7in': '6′ 7″',
+    '6ft 7': '6′ 7″',
+    '6ft 2': '6′ 2″',
+    '6ft2': '6 sqft',
+    '6\' 7"': '6′ 7″',
+    '6ft 13in': '7′ 1″',
+    '2 square meters + 500 square centimeters': '2.05 m²',
+    '2 m2 + 500 cm2': '2.05 m²',
+    '80 mph in km/h': '128.74752 km/h',
+  },
+  unitConversion: {
+    '10c to f': '50 °F',
+    '14f to c': '-10 °C',
+    '6ft 7in in meter': '2.0066 m',
+    '6894.757293168 Pa in psi': '1 psi',
+    '1 psi in Pa': '6,894.757293168 Pa',
+    '4.184 Ws in cal': '1 cal',
+  },
 
-  '10 divided by 0': '∞',
-  '0 divided by 0': 'Error',
-  'square root of -9': 'Error', // we're not supporting complex numbers
-  'log 0': '-∞',
-  '100% of 0': '0',
-  '0% off 0': '0',
-  'what % of 0 is 10': 'Error',
-  '5 is to 0 as 10 is to what': 'Error',
+  percentage: {
+    '100% of 0': '0',
+    '0% off 0': '0',
+    'what % of 0 is 10': 'Error',
+    '5 is to 0 as 10 is to what': 'Error',
 
-  '1,00': '1',
-  '1,000': '1,000',
-  '1.00': '1',
-  '1.000': '1',
-  '1.00,00': '100',
-  '1,00.00': '100',
+    '10% of 200': '20',
+    '25% × 200': '50',
+    '200 + 10%': '220',
+    '10% on 200': '220',
+    '200 - 10%': '180',
+    '10% off 200': '180',
+    '20 is 10% of what': '200',
+    '180 is 10% off what': '200',
+    '220 is 10% on what': '200',
+    '50 to 75 is what %': '50%',
+    '40 to 90 as %': '125%',
+    '180 is what % off 200': '10%',
+    '180 is what % on 150': '20%',
+    '20 is what % of 200': '10%',
+    '20 as a % of 200': '10%',
+    '10% + 20%': '30%',
+    '90% − 40%': '50%',
+    '30% + 0.4': '70%',
+    '100% - 1/2': '50%',
+    '100% + 2 + 30%': '330%',
+    '50% × 30': '15',
+    '30 × 50%': '15',
+  },
+  unitFormatting: {
+    'April 1, 2019 3:30pm as iso': '2019-04-01T15:30:00.000Z',
+    '2019-04-01T15:30:00 to date': '1 April 2019 at 15:30:00',
+    '2019-04-01T12:34:56.789 to date': '1 April 2019 at 12:34:56.789',
+    'April 1, 2019 to timestamp': '1554076800',
+    '1559740303.48 to date': '5 June 2019 at 13:11:43',
+    '1733823083000 to date': '10 December 2024 at 09:31:23.000',
+  },
+  pureFormatting: {
+    '$100 as number': '100',
+    '40/day to decimal': '40',
+    '20% as dec': '0.2',
+  },
+  nonIntFormatting: {
+    '1/3 to 2 dp': '0.33',
+    'π to 5 digits': '3.14159',
+    '20/200 as %': '10%',
+    '0.35 as %': '35%',
+    '2/5 as percent': '40%',
+    '2/10 as fraction': '1/5',
+    '50% as fraction': '1/2',
 
-  '30 plus 20': '50',
-  '4 -2': '2',
-  '3 − 42': '-39',
-  '3,000 minus 12': '2,988',
-  '3 multiplied by 4': '12',
-  '3 times 4': '12',
-  '1,000 divided by 200': '5',
-  '1km - 400m': '600 m',
-  '60km divided by 30min': '2 km/min',
-  '3 to the power of 2': '9',
-  'remainder of 21 divided by 5': '1',
-  'one hundred and twenty three plus forty five': '168',
-  'two point five times four': '10',
-  'two point seven three times four': '10.92',
-  'negative three hundred minus twelve': '-312',
-  'a million divided by two thousand': '500',
-  'three quarters of a hundred': '75',
-  'a third of 90': '30',
-  'double 45': '90',
-  'triple 3.5': '10.5',
-  '3 * (8 + 9)': '51',
-  '3 * 8 + 9 * 3': '51',
-  '3 * round(8 / 9)': '3',
-  'five hundred and six divided by forty two rounded': '12',
-  '3!': '6',
-  '7 fact': '5,040',
-  '0.001km': '0.001 km',
-  '3.6km/h in m/s': '1 m/s',
-  '2N / 4 kg': '0.5 m/s²',
-  '0.5 m/s * 4kg/s': '2 N',
-  '1/50ms in Hz': '20 Hz',
-  '60bpm as Hz': '1 Hz',
-  '10c to f': '50 °F',
-  '14f to c': '-10 °C',
-  '6ft 7in': '6′ 7″',
-  '6ft 7in in meter': '2.0066 m',
-  '6ft 7': '6′ 7″',
-  '6ft 2': '6′ 2″',
-  '6ft2': '6 sqft',
-  '6\' 7"': '6′ 7″',
-  '6ft 13in': '7′ 1″',
-  '6894.757293168 Pa in psi': '1 psi',
-  '1 psi in Pa': '6,894.757293168 Pa',
-  '4.184 Ws in cal': '1 cal',
-  'square root of (remainder of 21 divided by 5 plus 8)': '3',
-  'average of 10, count(4, 5, 6), and 3 to the power of 2': '7.333333333',
-  'half of 10% of 200': '10',
-  '10% off (200 + 10% on 100)': '279',
-  '20 to the power of (3 minus 1)': '400',
-  'midpoint between (100 + 50) and (400 / 2)': '175',
-  'half of 2': '1',
+    '20/5 as multiplier': '4x',
+    '50 as x of 5': '10x',
+    '2 as multiplier of 1': '2x',
+    '2 as multiplier on 1': '1x',
+    '1 as x off 2': '0.5x',
+    '50 to 75 is what x': '1.5x',
+    '20 to 40 as x': '2x',
+  },
 
-  '10 GB + 500 MB in GB': '10.5 GB',
-  '1 hour 15 minutes + 45 minutes': '2h',
-  '2 square meters + 500 square centimeters': '2.05 m²',
-  '2 m2 + 500 cm2': '2.05 m²',
-  '80 mph in km/h': '128.74752 km/h',
+  crossMultiplication: {
+    '6 is to 60 as 8 is to what': '80',
+    '5 is to 10 as what is to 80': '40',
+    '5 km is to 500m as 5 cm is to what': '0.005 m',
+    '30 minutes is to 3 hours as what is to 60 seconds': '10s',
+    '30 minutes is to what as 3 hours is to 60 seconds': '10s',
+    '200m to 2cm is 20m to what': '0.002 m',
+    '200m is to 2cm as what is to 20m': '200,000 m',
+    '200m is to 2cm as 20m is to what': '0.002 m',
+  },
+  sumEquation: {},
+  subtractEquation: {},
+  multiplyEquation: {
+    '50 is 1/5 of what': '250',
+  },
+  divideEquation: {},
+  powerEquation: {
+    '81 is 9 to what power': '2',
+    '27 is 3 to the what': '3',
+    '9 is 3 to the power of what': '2',
+    '9 equals what to the power of 2': '3',
+  },
+  moduloEquation: {},
+  factorialEquation: {},
+  medianEquation: {},
+  rootEquation: {},
+  logarithmEquation: {},
+  midEquation: {},
 
-  'total income: $4,500 rent + $600 food': '5,100\u00A0US$',
-  '$25 per hour * 14 hours of work': '350\u00A0US$',
-  '100 + 50 (bonus payment)': '150',
-  'interest on $5,000 after 5 years at 5%': '1,250\u00A0US$',
-  'what is 45 plus 55 please?': '100',
+  lists: {
+    '1, 2': '1, 2', // lists
+  },
+  functions: {
+    'add(1, 2)': '3',
+    'count(1, 2, 3)': '3',
+    'pow(sqrt(2), 2)': '2',
+    'fact(4)': '24',
+  },
 
-  '1, 2': '1, 2', // lists
-  'add(1, 2)': '3',
-  'count(1, 2, 3)': '3',
-  'pow(sqrt(2), 2)': '2',
-  'fact(4)': '24',
+  // 'interest on $5,000 after 5 years at 5%': '1,250\u00A0US$',
 
-  '1/3 to 2 dp': '0.33',
-  'π to 5 digits': '3.14159',
-  '5.5 rounded': '6',
-  '5.5rounded': '6',
-  '5.5 rounded up': '6',
-  '37 to nearest 10': '40',
-  '$490 rounded to nearest hundred': '500\u00A0US$',
-  '2,100 to nearest thousand': '2,000',
-  '21 rounded up to nearest 5': '25',
-  '17 rounded down to nearest 3': '15',
-
-  'total of 3, 4, 7 and 9': '23',
-  'average of 36, 42, 19 and 81': '44.5',
-  'count of 1, 2, 3, 4, 5': '5',
-  'median of 10, 20 and 30': '20',
-  'median of 10, 20, 30, 40': '25',
-
-  'square root of 81': '9',
-  'cube root of 27': '3',
-  'root 5 of 100': '2.511886432',
-  'log 20 base 4': '2.160964047',
-  '81 is 9 to what power': '2',
-  '27 is 3 to the what': '3',
-  '9 is 3 to the power of what': '2',
-  '9 equals what to the power of 2': '3',
-
-  'π': '3.141592654',
-  'Pi': '3.141592654',
-  'Tau': '6.283185307',
-  'Phi': '1.618033989',
-
-  '$100 as number': '100',
-  '40/day to decimal': '40',
-  '20% as dec': '0.2',
-  '6 is to 60 as 8 is to what': '80',
-  '5 is to 10 as what is to 80': '40',
-  '5 km is to 500m as 5 cm is to what': '0.005 m',
-  '30 minutes is to 3 hours as what is to 60 seconds': '10s',
-  '30 minutes is to what as 3 hours is to 60 seconds': '10s',
-  '200m to 2cm is 20m to what': '0.002 m',
-  '200m is to 2cm as what is to 20m': '200,000 m',
-  '200m is to 2cm as 20m is to what': '0.002 m',
-  'larger of 100 and 200': '200',
-  'greater of 100 and 200': '200',
-  'smaller of 5 and 10': '5',
-  'lesser of 5 and 10': '5',
-  'half of 175': '87.5',
-  'midpoint between 150 and 300': '225',
-  'midpoint between 300 and 150': '225',
-  'random number between 1 and 10': (result) => Number(result) <= 10 && Number(result) >= 1,
-  'random number between 0 and 1': (result) => Number(result) <= 1 && Number(result) >= 0,
-  'gcd of 20 and 30': '10',
-  'lcm of 5 and 8': '40',
-  '10 permutation 3': '720',
-  '25 combination 3': '2,300',
-  '3 permutations of 10': '720',
-  '3 combinations of 25': '2,300',
-  'clamp 26 between 5 and 25': '25',
-  'clamp 4 from 5 to 25': '5',
-
-  '10% of 200': '20',
-  'ten percent of two hundred': '20',
-  '25% × 200': '50',
-  '200 + 10%': '220',
-  '10% on 200': '220',
-  '200 - 10%': '180',
-  '10% off 200': '180',
-  '20 is 10% of what': '200',
-  '180 is 10% off what': '200',
-  '220 is 10% on what': '200',
-  '50 to 75 is what %': '50%',
-  '40 to 90 as %': '125%',
-  '180 is what % off 200': '10%',
-  '180 is what % on 150': '20%',
-  '20 is what % of 200': '10%',
-  '20 as a % of 200': '10%',
-  '20/200 as %': '10%',
-  '0.35 as %': '35%',
-  '2/5 as percent': '40%',
-  '10% + 20%': '30%',
-  '90% − 40%': '50%',
-  '30% + 0.4': '70%',
-  '100% - 1/2': '50%',
-  '100% + 2 + 30%': '330%',
-  '50% × 30': '15',
-  '30 × 50%': '15',
-  '2/10 as fraction': '1/5',
-  '50% as fraction': '1/2',
-  '2/3 of 600': '400',
-  '50 is 1/5 of what': '250',
-  '20/5 as multiplier': '4x',
-  '50 as x of 5': '10x',
-  '2 as multiplier of 1': '2x',
-  '2 as multiplier on 1': '1x',
-  '1 as x off 2': '0.5x',
-  '50 to 75 is what x': '1.5x',
-  '20 to 40 as x': '2x',
-
-  '10 June + 3 weeks': '1 July',
-  'April 1, 2019 - 3 months 5 days': '27 December 2018',
-  '12/02/1988 + 32 years': '12 February 2020',
-  '01.05.2005 + 3 years 2 months 3 weeks': '22 July 2008',
-  '3 weeks after March 14, 2019': '4 April 2019',
-  '28 days before March 12': '12 February',
-  '2 months 3 days after June 5': '8 August',
-  'yesterday - 8 weeks 3 days': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({days: -3, weeks: -8})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  sumTemporal: {
+    '10 June + 3 weeks': '1 July',
+    '12/02/1988 + 32 years': '12 February 2020',
+    '01.05.2005 + 3 years 2 months 3 weeks': '22 July 2008',
+    '3 weeks after March 14, 2019': '4 April 2019',
+    '2 months 3 days after June 5': '8 August',
+    'Yesterday + 1 week': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({weeks: 1})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'Yesterday + 1 megasecond': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({seconds: 1_000_000})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'today + 3 weeks': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({weeks: 3})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'tomorrow + 3 weeks': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: 1}).add({weeks: 3})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    '4 days from now': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC').add({days: 4})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'January 30, 2020 + 1 month': '29 February 2020',
+    'March 31 + 1 month': '30 April',
+    '11:30 pm + 90 mins': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 23, minute: 30, second: 0, millisecond: 0, nanosecond: 0})
+        .add({minutes: 90})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
+    },
+    '4.5 months from now': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC').add({seconds: Decimal(2_629_746).mul(4.5).toNumber()})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    // expecting overflow in date parsing
+    'February 30, 2026 + 1 day': '3 March 2026',
+    '11:59:59 pm + 1 second': (result) => result.includes('00:00'),
+    'Friday + 3 days': () => {
+      const now = Temporal.Now.zonedDateTimeISO('UTC')
+      const date = now.add({days: 5 - now.dayOfWeek}).add({days: 3})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
   },
-  'Yesterday + 1 week': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({weeks: 1})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  subtractTemporal: {
+    'April 1, 2019 - 3 months 5 days': '27 December 2018',
+    '28 days before March 12': '12 February',
+    'yesterday - 8 weeks 3 days': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({days: -3, weeks: -8})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'now - 1 month': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC').add({months: -1})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'today at 2 - 30 minutes': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 2, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
+        .add({minutes: -30})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
+    },
+    '9:45 am - 15 hours 10 minutes': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 9, minute: 45, second: 0, millisecond: 0, nanosecond: 0})
+        .add({hours: -15, minutes: -10})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
+    },
+    'now - 4.5 months': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC').add({seconds: Decimal(2_629_746).mul(4.5).mul(-1).toNumber()})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
+    'today - today': '0d',
   },
-  'Yesterday + 1 megasecond': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: -1}).add({seconds: 1_000_000})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  // todo helper for relative dates
+  ago: {
+    '3 days ago': () => {
+      const date = Temporal.Now.zonedDateTimeISO('UTC').add({days: -3})
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
   },
-  'today + 3 weeks': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({weeks: 3})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  since: {
+    'days since July 15': () => {
+      const duration = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
+        .since(`${new Date().getUTCFullYear()}-07-15T00:00:00[UTC]`)
+      return Math.round(duration.total('days')) + 'd'
+    },
   },
-  'tomorrow + 3 weeks': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0}).add({days: 1}).add({weeks: 3})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  till: {
+    'days till December 25': () => {
+      const duration = Temporal.Now.zonedDateTimeISO('UTC')
+        .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
+        .until(`${new Date().getUTCFullYear()}-12-25T00:00:00[UTC]`)
+      return Math.round(duration.total('days')) + 'd'
+    },
   },
-  'now - 1 month': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC').add({months: -1})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  between: {
+    'January 10 - February 5': '3w 5d',
+    '3 March to 30 May': '12w 4d',
+    'days between 3 March and 30 May': '88d',
+    // '1978 to 2021': '43y', // this is difficult cause these could also just be meant as numbers
+    'April 1 through April 30 in days': '30d',
+    'days in Q3': '92d',
+    'days in February 2020': '29d',
+    '7:45 am to 4:20 pm in hours': '8.583333333h',
+    'days in February 2100': '28d',
   },
-  'today at 2 - 30 minutes': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 2, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
-      .add({minutes: -30})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
+  timezoneConversion: {
+    '6pm Sydney in Chicago': result => result.endsWith(' at 02 GMT-5'),
+    '2am PST to GMT': result => result.endsWith(' at 09 GMT'),
+    '3pm GMT+8 to Paris': result => result.endsWith(' at 09 GMT+2') || result.endsWith(' at 08 GMT+1'),
+    'time in Tokyo when it is 9am in London': result => result.endsWith(' at 17 GMT+9') || result.endsWith(' at 18 GMT+9'),
+    'Monday 9am Delhi in new york': result => result.endsWith(' at 23:30 GMT-4'),
+    // '7:30am LAX to Japan': '',
+    'time in Paris': () => {
+      const date = Temporal.Now.zonedDateTimeISO('Europe/Paris')
+      return date.toLocaleString(LOCALE, {
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'shortOffset' // todo implement shortGeneric usage (pass localized time zone name instead of offset)
+      })
+    },
+    'Tokyo time': () => {
+      const date = Temporal.Now.zonedDateTimeISO('+09:00')
+      return date.toLocaleString(LOCALE, {
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'shortGeneric'
+      })
+    },
+    'time in Thailand': () => {
+      const date = Temporal.Now.zonedDateTimeISO('+07:00')
+      return date.toLocaleString(LOCALE, {
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'shortGeneric'
+      })
+    },
+    'date in Vancouver': () => {
+      const date = Temporal.Now.zonedDateTimeISO('-07:00')
+      return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+    },
   },
-  '4 days from now': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC').add({days: 4})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  timezoneDifference: {
+    'time difference between Seattle and Moscow': '10h',
+    // 'difference between PDT & AEST': '17h',
   },
-  '3 days ago': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC').add({days: -3})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
+  current: {
+    'current timestamp': (result) => Decimal(Date.now()).div(1000).sub(result).lt(0.1),
   },
-  'January 10 - February 5': '3w 5d',
-  '3 March to 30 May': '12w 4d',
-  'days since July 15': () => {
-    const duration = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
-      .since(`${new Date().getUTCFullYear()}-07-15T00:00:00[UTC]`)
-    return Math.round(duration.total('days')) + 'd'
+  invalidTemporalOperation: {
+    'now * 3 seconds': 'Error',
+    'now + 10%': 'Error',
+    'now - 10%': 'Error',
   },
-  'days till December 25': () => {
-    const duration = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 0, minute: 0, second: 0, millisecond: 0, nanosecond: 0})
-      .until(`${new Date().getUTCFullYear()}-12-25T00:00:00[UTC]`)
-    return Math.round(duration.total('days')) + 'd'
-  },
-  'days between 3 March and 30 May': '88d',
-  // '1978 to 2021': '43y', // this is difficult cause these could also just be meant as numbers
-  'April 1 through April 30 in days': '30d',
-  'week of year': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-    return String(date.weekOfYear)
-  },
-  'week number on march 12, 2021': '10',
-  'days in Q3': '92d',
-  'days in February 2020': '29d',
-  '9:45 am - 15 hours 10 minutes': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 9, minute: 45, second: 0, millisecond: 0, nanosecond: 0})
-      .add({hours: -15, minutes: -10})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
-  },
-  '6pm Sydney in Chicago': result => result.endsWith(' at 02 GMT-5'),
-  '2am PST to GMT': result => result.endsWith(' at 09 GMT'),
-  '3pm GMT+8 to Paris': result => result.endsWith(' at 09 GMT+2') || result.endsWith(' at 08 GMT+1'),
-  'time in Tokyo when it is 9am in London': result => result.endsWith(' at 17 GMT+9') || result.endsWith(' at 18 GMT+9'),
-  'Monday 9am Delhi in new york': result => result.endsWith(' at 23:30 GMT-4'),
-  // '7:30am LAX to Japan': '',
-  'time in Paris': () => {
-    const date = Temporal.Now.zonedDateTimeISO('Europe/Paris')
-    return date.toLocaleString(LOCALE, {
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'shortOffset' // todo implement shortGeneric usage (pass localized time zone name instead of offset)
-    })
-  },
-  'Tokyo time': () => {
-    const date = Temporal.Now.zonedDateTimeISO('+09:00')
-    return date.toLocaleString(LOCALE, {
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'shortGeneric'
-    })
-  },
-  'time in Thailand': () => {
-    const date = Temporal.Now.zonedDateTimeISO('+07:00')
-    return date.toLocaleString(LOCALE, {
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'shortGeneric'
-    })
-  },
-  'date in Vancouver': () => {
-    const date = Temporal.Now.zonedDateTimeISO('-07:00')
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
-  },
-  'time difference between Seattle and Moscow': '10h',
-  // 'difference between PDT & AEST': '17h',
-  'April 1, 2019 3:30pm as iso': '2019-04-01T15:30:00.000Z',
-  '2019-04-01T15:30:00 to date': '1 April 2019 at 15:30:00',
-  '2019-04-01T12:34:56.789 to date': '1 April 2019 at 12:34:56.789',
-  'April 1, 2019 to timestamp': '1554076800',
-  '1559740303.48 to date': '5 June 2019 at 13:11:43',
-  'current timestamp': (result) => Decimal(Date.now()).div(1000).sub(result).lt(0.1),
-  '1733823083000 to date': '10 December 2024 at 09:31:23.000',
-  'January 30, 2020 + 1 month': '29 February 2020',
-  'March 31 + 1 month': '30 April',
-  '11:30 pm + 90 mins': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC')
-      .with({hour: 23, minute: 30, second: 0, millisecond: 0, nanosecond: 0})
-      .add({minutes: 90})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})
-  },
-  '7:45 am to 4:20 pm in hours': '8.583333333h',
-  '4.5 months from now': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC').add({seconds: Decimal(2_629_746).mul(4.5).toNumber()})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
-  },
-  'now - 4.5 months': () => {
-    const date = Temporal.Now.zonedDateTimeISO('UTC').add({seconds: Decimal(2_629_746).mul(4.5).mul(-1).toNumber()})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
-  },
-  'now * 3 seconds': 'Error',
-  'now + 10%': 'Error',
-  'now - 10%': 'Error',
-  // expecting overflow in date parsing
-  'February 30, 2026 + 1 day': '3 March 2026',
-  '11:59:59 pm + 1 second': (result) => result.includes('00:00'),
-  'today - today': '0d',
-  'Friday + 3 days': () => {
-    const now = Temporal.Now.zonedDateTimeISO('UTC')
-    const date = now.add({days: 5 - now.dayOfWeek}).add({days: 3})
-    return date.toLocaleString(LOCALE, {month: 'long', day: 'numeric'})
-  },
-  'days in February 2100': '28d',
 }
 
-describe('Should evaluate correctly', () => {
-  for (const expression in results) {
-    it(expression, () => {
-      if (typeof results[expression as keyof typeof results] === 'function') {
-        const actual = evaluate(expression)
-        // @ts-ignore
-        const expected = results[expression as keyof typeof results](actual)
-        if (typeof expected === 'string') {
-          assert.equal(actual, expected)
+for (const type in results) {
+  describe(`Should evaluate "${type}" correctly`, () => {
+    for (const expression in results[type]) {
+      it(expression, () => {
+        if (typeof results[type][expression] === 'function') {
+          const actual = evaluate(expression)
+          // @ts-ignore
+          const expected = results[type][expression](actual)
+          if (typeof expected === 'string') {
+            assert.equal(actual, expected)
+          } else {
+            assert.ok(expected, `Invalid output: "${actual}"`)
+          }
         } else {
-          assert.ok(expected, `Invalid output: "${actual}"`)
+          const expected = results[type][expression]
+          const result = evaluate(expression)
+          assert.strictEqual(result, expected,
+            `Expected \`${expected}\` for expression \`${expression}\`, got \`${result}\``)
         }
-      } else {
-        const result = evaluate(expression)
-        assert.strictEqual(result, results[expression as keyof typeof results],
-          `Expected \`${results[expression as keyof typeof results]}\` for expression \`${expression}\`, got \`${result}\``)
-      }
-    })
-  }
-})
+      })
+    }
+  })
+}
 
 describe('Random', () => {
   it('should match range', () => {

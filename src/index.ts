@@ -43,7 +43,7 @@ function resolveAndFormat(token: Exclude<Token, ListToken>, formatting?: Formatt
 function replaceNumberWords(text: string) {
   let numberWord
   while (numberWord = findNumberWord(text)) {
-    text = text.replace(numberWord.match, numberWord.data.toString())
+    text = text.replace(numberWord.match.trim(), numberWord.data.toString())
   }
   return text
 }
@@ -51,7 +51,7 @@ function replaceNumberWords(text: string) {
 function normalize(expression: string) {
   expression = expression.replace(/\s+/g, ' ')
   expression = expression.replace(/(?<=\d) per (?=\p{L})/ug, '/')
-  expression = expression.replace(/(\d)\s+(\d)(?!\d*:)(?!\d* ?[ap]\.?m\.?)/g, '$1$2')
+  expression = expression.replace(/(?<!root\s+\d*)(\d)\s+(\d)(?!\d*:)(?!\d* ?[ap]\.?m\.?)/g, '$1$2')
   expression = replaceNumberWords(expression)
   expression = expression.replace(/ +/g, ' ')
   return expression
