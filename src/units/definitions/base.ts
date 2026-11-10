@@ -14,6 +14,9 @@ export function c(from: Decimal): Conversion
 export function c(from: Converter, to: Converter): Conversion
 export function c(from: Decimal | Converter, to?: Converter): Conversion {
   let fromFunc: Converter, toFunc: Converter
+  if (!Decimal.isDecimal(from) && !isNaN(Number(from))) {
+    from = Decimal(Number(from))
+  }
   if (Decimal.isDecimal(from)) {
     const conversion = from
     fromFunc = (number: Decimal) => number.mul(conversion)

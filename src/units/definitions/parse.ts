@@ -217,7 +217,7 @@ for (const unitClass in unitsShort) {
     // @ts-ignore
     const unitRegex = unitsShort[unitClass][unit]
     // @ts-ignore can you tell that im fed up
-    unitsShort[unitClass][unit] = new RegExp(`\\b(?:${unitRegex.source})\\b`)
+    unitsShort[unitClass][unit] = new RegExp(`(?<![\\p{L}])(?:${unitRegex.source})(?!\\w)`, 'u')
   }
 }
 

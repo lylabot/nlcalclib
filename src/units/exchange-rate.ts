@@ -21,7 +21,7 @@ export class FreeExchangerateAPI extends ExchangeRate {
       .then(res => res.json())
       .then(data => {
         this.cache = data.rates
-        setTimeout(() => this.refreshRate(), (data.time_next_update_unix - Date.now()) + 1000)
+        setTimeout(() => this.refreshRate(), ((data.time_next_update_unix * 1000) - Date.now()) + 1000)
       })
       .catch(error => console.log(error))
   }

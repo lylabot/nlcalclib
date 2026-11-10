@@ -468,11 +468,11 @@ const results: { [key: string]: { [key: string]: string | ((result: string) => b
     'days in February 2100': '28d',
   },
   timezoneConversion: {
-    '6pm Sydney in Chicago': result => result.endsWith(' at 02 GMT-5'),
-    '2am PST to GMT': result => result.endsWith(' at 09 GMT'),
+    '6pm Sydney in Chicago': result => result.endsWith(' at 01 GMT-6') || result.endsWith(' at 02 GMT-5'),
+    '2am PST to GMT': result => result.endsWith(' at 10 GMT') || result.endsWith(' at 09 GMT'),
     '3pm GMT+8 to Paris': result => result.endsWith(' at 09 GMT+2') || result.endsWith(' at 08 GMT+1'),
     'time in Tokyo when it is 9am in London': result => result.endsWith(' at 17 GMT+9') || result.endsWith(' at 18 GMT+9'),
-    'Monday 9am Delhi in new york': result => result.endsWith(' at 23:30 GMT-4'),
+    'Monday 9am Delhi in new york': result => result.endsWith(' at 22:30 GMT-5') || result.endsWith(' at 23:30 GMT-4'),
     // '7:30am LAX to Japan': '',
     'time in Paris': () => {
       const date = Temporal.Now.zonedDateTimeISO('Europe/Paris')
@@ -510,7 +510,7 @@ const results: { [key: string]: { [key: string]: string | ((result: string) => b
     },
   },
   timezoneDifference: {
-    'time difference between Seattle and Moscow': '10h',
+    'time difference between Seattle and Moscow': result => result === '10h' || result === '11h',
     // 'difference between PDT & AEST': '17h',
   },
   current: {
